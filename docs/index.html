@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refresh / Content Opportunity Scoring</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.7;
+    max-width: 950px;
+    margin: auto;
+    padding: 40px 20px;
+    color: #222;
+    background: #ffffff;
+}
+
+h1 {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+h2 {
+    margin-top: 40px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 8px;
+}
+
+h3 {
+    margin-top: 25px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 18px;
+}
+
+.abstract {
+    background: #f5f5f5;
+    padding: 20px;
+    border-left: 4px solid #555;
+}
+
+.metric-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.metric-table th,
+.metric-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.metric-table th {
+    background: #f2f2f2;
+}
+
+.highlight {
+    font-weight: bold;
+}
+
+.note {
+    background: #fff8e1;
+    padding: 15px;
+    border-left: 4px solid #d6a500;
+}
+
+footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Refresh / Content Opportunity Scoring</h1>
+
+<p class="subtitle">
+A machine-learning approach for prioritizing content pages for refresh review
+</p>
+
+<h2>Abstract</h2>
+
+<div class="abstract">
+<p>
+This study asks whether historical search, content, traffic, and engagement signals can be used to prioritize pages for potential content-refresh review. A Logistic Regression model was trained to distinguish pages associated with declining trends and was evaluated against a simple baseline using a grouped train/test split. The model uses search-demand, content, traffic, engagement, and categorical content signals while excluding direct trend fields from the predictive features. The resulting probabilities are combined with impression volume to produce a ranked list of content pages for human review. The results provide a repeatable prioritization framework for content planning, while the analysis does not claim causal effects or explain search-engine algorithms.
+</p>
+</div>
+
+<h2>Introduction and Problem Statement</h2>
+
+<p>
+Content teams often have more pages available for review than they can manually evaluate. A useful prioritization system can help identify pages that deserve attention based on measurable search and engagement signals.
+</p>
+
+<p>
+This research investigates whether historical content, search, traffic, and engagement signals can be used to prioritize pages associated with declining performance. The goal is not to prove why a page declined, but to create a repeatable decision-support method for determining which pages should be reviewed first.
+</p>
+
+<h2>Research Question</h2>
+
+<p>
+Can historical search and content-performance signals be used to identify pages that are growing, declining, recovering, or worth review, and rank them for content-refresh actions?
+</p>
+
+<h2>Data</h2>
+
+<p>
+The analysis uses the anonymized FlyRank Machine Learning Internship dataset. The working dataset contains 30,000 content records and 44 available fields.
+</p>
+
+<p>
+The analysis uses search-demand, content, traffic, engagement, and trend-related fields available in the dataset. The dataset was inspected for missing values and duplicate records before modeling. No duplicate rows were identified during the analysis.
+</p>
+
+<p>
+The target label was derived from the recorded trend direction. Pages with a trend direction of <code>down</code> were treated as refresh candidates for the binary prioritization task.
+</p>
+
+<div class="note">
+<strong>Public-data safety:</strong>
+This paper does not expose client names, domains, URLs, private queries, credentials, or raw client exports.
+</div>
+
+<h2>Methodology</h2>
+
+<h3>Target Label</h3>
+
+<p>
+The target variable is <code>refresh_candidate</code>. A value of 1 represents a page whose recorded trend direction is <code>down</code>. Other recorded trend directions are represented as 0.
+</p>
+
+<h3>Features</h3>
+
+<p>
+The model uses available search, content, traffic, and engagement signals including search volume, competition, CPC, word count, character count, impressions, clicks, pageviews, sessions, users, engaged sessions, AI sessions, days with impressions, days with sessions, CTR, average position, engagement rate, scroll rate, AI traffic percentage, content type, main intent, provider metadata, and model metadata.
+</p>
+
+<p>
+Direct trend fields and identifiers were excluded from the model inputs. In particular, <code>content_id</code>, <code>client_id</code>, <code>trend_direction</code>, and <code>trend_pct</code> were not used as predictive features.
+</p>
+
+<h3>Model</h3>
+
+<p>
+A Logistic Regression classifier was selected as a simple and interpretable supervised-learning model. Numerical missing values were handled using median imputation and standardization. Categorical variables were imputed using the most frequent category and encoded using one-hot encoding.
+</p>
+
+<h3>Validation</h3>
+
+<p>
+The dataset was divided into training and testing subsets using an 80/20 grouped split. Client identifiers were used only to create groups, reducing the risk of records from the same client appearing in both training and testing data.
+</p>
+
+<h3>Baseline</h3>
+
+<p>
+The Logistic Regression model was compared against a simple prior-probability baseline using the same test data.
+</p>
+
+<h2>Results</h2>
+
+<p>
+The Logistic Regression model performed better than the baseline across all reported metrics. However, the improvement is modest, so the model should be treated as a prioritization aid rather than a highly accurate predictive system.
+</p>
+
+<table class="metric-table">
+<tr>
+<th>Model</th>
+<th>Accuracy</th>
+<th>ROC-AUC</th>
+<th>PR-AUC</th>
+</tr>
+
+<tr>
+<td>Logistic Regression</td>
+<td class="highlight">0.5471</td>
+<td class="highlight">0.5688</td>
+<td class="highlight">0.5711</td>
+</tr>
+
+<tr>
+<td>Baseline</td>
+<td>0.5110</td>
+<td>0.5000</td>
+<td>0.5110</td>
+</tr>
+</table>
+
+<p>
+The ROC-AUC of 0.5688 is above the baseline value of 0.5000, while the PR-AUC of 0.5711 is above the baseline value of 0.5110. This indicates that the model contains some useful signal for prioritization, although its predictive strength is limited.
+</p>
+
+<h2>Ranked Content Recommendations</h2>
+
+<p>
+The trained model produces a refresh probability for each content record. This probability is combined with 90-day impression volume to calculate an impact score. Records with higher impact scores are placed higher in the review queue.
+</p>
+
+<h3>Recommended Review Process</h3>
+
+<ol>
+<li><strong>Very High priority:</strong> Review first for content freshness, search-intent alignment, outdated information, content depth, and internal linking.</li>
+<li><strong>High priority:</strong> Review after the Very High priority group.</li>
+<li><strong>Review:</strong> Keep in a monitoring queue and reassess periodically.</li>
+</ol>
+
+<p>
+The ranked recommendations are generated directly from the capstone notebook. Content IDs are anonymized and are intended only as identifiers within the dataset.
+</p>
+
+<h2>Artifacts the Paper Embeds</h2>
+
+<ul>
+<li>Dataset and trend-distribution analysis.</li>
+<li>Model-versus-baseline performance comparison.</li>
+<li>Top content-refresh recommendation ranking.</li>
+<li>Recommendation table containing refresh probability, impact score, and priority.</li>
+<li>Methodology, validation, and leakage-check documentation.</li>
+</ul>
+
+<h2>Limitations and Honest Framing</h2>
+
+<p>
+The target label is based on the observed <code>trend_direction</code> field rather than a separately measured future outcome. Therefore, the model should be interpreted as a prioritization model rather than a guaranteed prediction of future performance.
+</p>
+
+<p>
+The dataset contains aggregated 90-day performance signals. These signals may describe the same period associated with the observed trend, so the results should not be interpreted as evidence of causal relationships.
+</p>
+
+<p>
+The model is trained and evaluated on the available FlyRank internship dataset. Its performance may not generalize to other datasets, clients, industries, or time periods.
+</p>
+
+<p>
+The analysis does not prove how Google or another search engine algorithm works, and it does not establish that refreshing a page will cause its search performance to improve.
+</p>
+
+<h2>Reproducibility</h2>
+
+<p>
+The analysis was implemented in the capstone notebook using Python and standard machine-learning libraries. The workflow includes data loading, data inspection, preprocessing, grouped train/test validation, Logistic Regression training, baseline comparison, evaluation, and ranked recommendation generation.
+</p>
+
+<p>
+The completed capstone notebook is maintained in the project repository under the <code>work/</code> directory. The raw dataset is stored in the repository's data structure as the anonymized internship dataset used for this analysis.
+</p>
+
+<h2>Decision Supported</h2>
+
+<p>
+This analysis supports the decision of which content pages should be prioritized for human review or potential refresh. The output is intended to make content-planning decisions more systematic and repeatable.
+</p>
+
+<h2>Acknowledgments and Data Credit</h2>
+
+<p>
+Built on the FlyRank ML Internship dataset.
+</p>
+
+<p>
+<a href="https://flyrank.ai" target="_blank">FlyRank</a>
+</p>
+
+<footer>
+<p>
+Research analysis completed as part of the FlyRank Machine Learning Internship capstone.
+</p>
+</footer>
+
+</body>
+</html>
